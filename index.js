@@ -14,7 +14,7 @@ manager.setInstanceParams({
 }).setValidInstanceOptions({
 
 	ImageId:['ami-014b71fc78f51dec0'], //todo create more images 
-	InstanceType: ['t2.micro'],
+	InstanceType: ['t2.nano', 't2.micro', 't2.small', 't2.medium', 't2.large'],
 
 }).listInstances().then((instances)=>{
 
@@ -57,6 +57,34 @@ manager.setInstanceParams({
 
 		if(args.method==='createInstance'){
 			var options=args.options||{}
+
+
+			if(options.mem&&options.cpu){
+
+				options.InstanceType='t2.nano';
+
+				var mem=parseFloat(options.mem);
+				var cpu=parseFloat(options.cpu);
+
+				if(cpu>=1||mem>=1){
+					options.InstanceType='t2.nano';
+				}
+
+				if(mem>=2){
+					options.InstanceType='t2.small';
+				}
+
+				if(cpu>=2||mem>=2){
+					options.InstanceType='t2.medium';
+				}
+
+				if(mem>2){
+					options.InstanceType='t2.large';
+				}
+
+			}
+
+
 			return manager.createInstance(options.title||"Untitled instance", args.options);
 
 			//return;
