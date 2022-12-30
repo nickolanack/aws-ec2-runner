@@ -11,12 +11,13 @@ export class EC2Manager extends EventEmitter {
 
 		super();
 
-		(new Promise((resolve)=>{
+		(new Promise((resolve, reject)=>{
 
 			AWS.config.getCredentials((err) => {
 
 				if (err) {
-					throw(err);
+					reject(err);
+					return;
 				}
 				resolve(true);
 
