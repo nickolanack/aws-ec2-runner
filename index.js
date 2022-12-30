@@ -26,14 +26,14 @@ manager.listInstances().then((instances)=>{
 
 		if(args.method==='stopInstance'&&typeof args.instance =='string'){
 			console.log('Stopping instance: '+args.instance);
-			return manager.stopInstance(args.instanceId);
+			return manager.stopInstance(args.instance);
 
 			return;
 		}
 
 		if(args.method==='terminateInstance'&&typeof args.instance =='string'){
 			console.log('Terminating instance: '+args.instance);
-			return manager.terminateInstance(args.instanceId);
+			return manager.terminateInstance(args.instance);
 
 			return;
 		}
