@@ -61,24 +61,24 @@ manager.setInstanceParams({
 
 			if(options.mem&&options.cpu){
 
-				options.InstanceType='t2.nano';
+				options.InstanceType='t2.nano'; //1,0.5
 
 				var mem=parseFloat(options.mem);
 				var cpu=parseFloat(options.cpu);
 
-				if(cpu>=1||mem>=1){
-					options.InstanceType='t2.nano';
+				if(mem>=1){ //1, 1
+					options.InstanceType='t2.micro';
 				}
 
-				if(mem>=2){
+				if(mem>=2){ //1, 2
 					options.InstanceType='t2.small';
 				}
 
-				if(cpu>=2||mem>=2){
+				if(cpu>=2||mem>=2){ //2, 4
 					options.InstanceType='t2.medium';
 				}
 
-				if(mem>2){
+				if(mem>2){ //2, 8
 					options.InstanceType='t2.large';
 				}
 
