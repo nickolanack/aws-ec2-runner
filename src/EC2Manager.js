@@ -27,9 +27,7 @@ export class EC2Manager extends EventEmitter {
 		})).catch(()=>{
 
 			AWS.config.loadFromPath('./.credentials.json');
-
 			console.log('loaded from json file');
-
 			return true;
 		
 		}).then(()=>{
@@ -39,8 +37,8 @@ export class EC2Manager extends EventEmitter {
 				region: 'ca-central-1'
 			});
 
-			console.log("Access key:", AWS.config.credentials.accessKeyId);
-			console.log("Region: ", AWS.config.region);
+			//console.log("Access key:", AWS.config.credentials.accessKeyId);
+			//console.log("Region: ", AWS.config.region);
 
 
 			this._loaded = true;
@@ -89,7 +87,6 @@ export class EC2Manager extends EventEmitter {
 				DryRun: false
 			};
 
-			console.log("Listing instances");
 
 			return new Promise((resolve) => {
 
@@ -101,8 +98,7 @@ export class EC2Manager extends EventEmitter {
 
 
 
-					console.log("Success");
-
+					//console.log("Success");
 					//console.log(JSON.stringify(data, null, '   '));
 
 

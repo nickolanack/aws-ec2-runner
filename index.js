@@ -7,26 +7,49 @@ const manager=new EC2Manager();
 
 manager.listInstances().then((instances)=>{
 
-	console.log(JSON.stringify(instances));
+	
 	return instances;
 
-}).then(()=>{
+}).then((instances)=>{
 
 
 	if(typeof process.argv[2]=='string'&&process.argv[2][0]=='{'){
 
 
-		var args=JSON.parse(process.argv[2]);
-		if(args.method==='stopInstance'&&typeof args.instanceId =='string'){
+		var arg=process.argv[2];
+	
+		if(arg.indexOf('{\\"')===0){
+			arg=arg.replaceAll('\\"', '"');
+		}		
+
+		var args=JSON.parse(arg);
+
+		if(args.method==='stopInstance'&&typeof args.instance =='string'){
+			console.log('Stopping instance: '+args.instance);
 			return manager.stopInstance(args.instanceId);
+
+			return;
 		}
 
-		if(args.method==='terminateInstance'&&typeof args.instanceId =='string'){
+		if(args.method==='terminateInstance'&&typeof args.instance =='string'){
+			console.log('Terminating instance: '+args.instance);
 			return manager.terminateInstance(args.instanceId);
+
+			return;
 		}
+
+
+		if(args.method==='listInstances'){
+			console.log(JSON.stringify(instances));
+			return;
+		}
+
+		console.log('Nothing to do :'+JSON.stringify(args));
 
 		return;
 	}
+
+	console.log(JSON.stringify(instances));
 
 
 
