@@ -10,13 +10,24 @@ export class EC2Manager extends EventEmitter {
 	constructor() {
 
 		super();
-		AWS.config.getCredentials((err) => {
 
-			if (err) {
-				console.log(err.stack);
-				return;
-			}
+		(new Promise((resolve)=>{
 
+			AWS.config.getCredentials((err) => {
+
+				if (err) {
+					throw(err);
+				}
+				resolve(true);
+
+			});
+
+
+		})).catch(()=>{
+
+			AWS.config.loadFromPath('./.credentials.json');
+		
+		}).then(()=>{
 
 
 			AWS.config.update({
@@ -35,7 +46,11 @@ export class EC2Manager extends EventEmitter {
 
 			this.emit('load')
 
+
+
 		});
+
+		
 
 	}
 
