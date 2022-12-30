@@ -1,0 +1,41 @@
+{
+
+    "ImageId": "ami-014b71fc78f51dec0",
+    "InstanceId": "i-02fa670b311d1f798",
+    "InstanceType": "t2.micro",
+   
+    "LaunchTime": "2022-12-29T06:45:26.000Z",
+    "Monitoring": {
+       "State": "disabled"
+    },
+    "Placement": {
+       "AvailabilityZone": "ca-central-1a",
+    },
+    "PublicDnsName": "ec2-15-223-113-84.ca-central-1.compute.amazonaws.com",
+    "PublicIpAddress": "15.223.113.84",
+    "State": {
+       "Code": 16,
+       "Name": "running"
+    },
+    
+    "Architecture": "x86_64",
+    "Tags": [
+       {
+          "Key": "Owner",
+          "Value": "hello-world"
+       },
+       {
+          "Key": "Name",
+          "Value": "ProcessRunner 1672296327014"
+       }
+    ],
+
+    "CpuOptions": {
+       "CoreCount": 1,
+       "ThreadsPerCore": 1
+    },
+
+
+    "PlatformDetails": "Linux/UNIX",
+    "UsageOperation": "RunInstances"
+ }
