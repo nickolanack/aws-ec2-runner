@@ -11,7 +11,33 @@ export class EC2Manager extends EventEmitter {
 
 		super();
 
-		(new Promise((resolve, reject)=>{
+
+		/**
+			* the default params used to create new instances, can be set by setInstanceParams, and can also be set from options when calling createInstance
+			*/
+
+		this._instanceParams = {
+
+			ImageId: 'ami-06c3426233c180fef', //Amazon Linux 2 Kernel 5.10 AMI 2.0.20221210.1 x86_64 HVM gp2
+			InstanceType: 't2.micro',
+			//KeyName: 'ec2_rsa', //optional
+			MinCount: 1,
+			MaxCount: 1
+
+		}
+
+
+		/**
+			* this is the list of valid instance params used to validate options passed to createInstance
+			*/
+
+		this._validInstanceParams = {
+			ImageId: ['ami-06c3426233c180fef'],
+			InstanceType: ['t2.micro'],
+		};
+
+
+		(new Promise((resolve, reject) => {
 
 			AWS.config.getCredentials((err) => {
 
@@ -24,13 +50,13 @@ export class EC2Manager extends EventEmitter {
 			});
 
 
-		})).catch(()=>{
+		})).catch(() => {
 
 			AWS.config.loadFromPath('./.credentials.json');
 			console.log('loaded from json file');
 			return true;
-		
-		}).then(()=>{
+
+		}).then(() => {
 
 
 			AWS.config.update({
@@ -53,8 +79,35 @@ export class EC2Manager extends EventEmitter {
 
 		});
 
-		
 
+
+	}
+
+
+	setInstanceParams(args) {
+
+		Object.keys(args || {}).forEach((k) => {
+			//whitelist
+			if ((['ImageId', 'InstanceType', 'KeyName']).indexOf(k) === -1) {
+				return;
+			}
+			this._instanceParams[k] = args[k];
+		});
+
+		return this;
+	}
+
+
+	setValidInstanceOptions(args) {
+		Object.keys(args || {}).forEach((k) => {
+			//whitelist
+			if ((['ImageId', 'InstanceType', 'KeyName']).indexOf(k) === -1) {
+				return;
+			}
+			this._validInstanceParams[k] = args[k];
+		});
+
+		return this;
 	}
 
 	_init() {
@@ -143,7 +196,7 @@ export class EC2Manager extends EventEmitter {
 							"UsageOperation"
 
 						]).forEach((k) => {
-							out[k] =  instanceData.Instances[0][k];
+							out[k] = instanceData.Instances[0][k];
 						});
 
 
@@ -170,24 +223,60 @@ export class EC2Manager extends EventEmitter {
 	createInstance(label, options) {
 
 
+		options = options || {};
+
+
+		// AMI is ami-06c3426233c180fef
+		var instanceParams = JSON.parse(JSON.stringify(this._instanceParams));
+
+
+		Object.keys(options || {}).forEach((k) => {
+			//whitelist
+			if ((Object.keys(this._validInstanceParams)).indexOf(k) === -1) {
+				return;
+			}
+
+			if (this._validInstanceParams[k].indexOf(options[k]) === -1) {
+				throw 'Invalid option for: ' + k + ' ' + options[k];
+			}
+
+			instanceParams[k] = options[k];
+		});
+
+
+		var tags = [{
+				Key: 'Name',
+				Value: 'ProcessRunner ' + (new Date()).getTime()
+			}, {
+				Key: 'Owner',
+				Value: 'hello-world'
+			}, {
+				Key: 'Label',
+				Value: label
+			}
+
+		];
+
+		if (options.tags) {
+			Object.keys(options.tags).forEach((n) => {
+
+				//blacklist 
+				if ((['Name', 'Owner', 'Label']).indexOf(k) >= 0) {
+					return;
+				}
+
+				tags.push({
+					Key: n,
+					Value: options.tags[n]
+				});
+
+			});
+		}
+
+
 		return this._init().then(() => {
 
 
-
-			// AMI is amzn-ami-2011.09.1.x86_64-ebs
-			var instanceParams = {
-				ImageId: 'ami-014b71fc78f51dec0',
-				InstanceType: 't2.micro',
-				KeyName: 'ec2_rsa',
-				MinCount: 1,
-				MaxCount: 1
-			};
-
-
-
-			Object.keys(options || {}).forEach((k) => {
-				instanceParams[k] = options[k];
-			});
 
 			return this._ec2.runInstances(instanceParams).promise();
 
@@ -199,34 +288,23 @@ export class EC2Manager extends EventEmitter {
 
 			var tagParams = {
 				Resources: [instanceId],
-				Tags: [{
-						Key: 'Name',
-						Value: 'ProcessRunner ' + (new Date()).getTime()
-					}, {
-						Key: 'Owner',
-						Value: 'hello-world'
-					}, {
-						Key: 'Label',
-						Value: label
-					}
-
-				]
+				Tags: tags
 			};
 
 			return this._ec2.createTags(tagParams).promise();
-			
+
 		});
 
 
 
 	}
 
-	hasInstance(instanceId){
-		return this.listInstances().then((instances)=>{
+	hasInstance(instanceId) {
+		return this.listInstances().then((instances) => {
 
-			if(instances.filter((instance)=>{
-				return instance.InstanceId===instanceId
-			}).length===0){
+			if (instances.filter((instance) => {
+					return instance.InstanceId === instanceId
+				}).length === 0) {
 				return false;
 			}
 			return true;
@@ -235,19 +313,19 @@ export class EC2Manager extends EventEmitter {
 	}
 
 
-	stopInstance(instanceId){
+	stopInstance(instanceId) {
 
-		return this.hasInstance(instanceId).then((exists)=>{
+		return this.hasInstance(instanceId).then((exists) => {
 
-			if(!exists){
-				throw 'instance: '+instanceId+', not found';
+			if (!exists) {
+				throw 'instance: ' + instanceId + ', not found';
 			}
 
-			 var params = {
-			  InstanceIds: [
-			    instanceId
-			  ]
-			 }
+			var params = {
+				InstanceIds: [
+					instanceId
+				]
+			}
 
 			return this._ec2.stopInstances(params).promise();
 
@@ -256,19 +334,19 @@ export class EC2Manager extends EventEmitter {
 
 	}
 
-	terminateInstance(instanceId){
+	terminateInstance(instanceId) {
 
-		return this.hasInstance(instanceId).then((exists)=>{
+		return this.hasInstance(instanceId).then((exists) => {
 
-			if(!exists){
-				throw 'instance: '+instanceId+', not found';
+			if (!exists) {
+				throw 'instance: ' + instanceId + ', not found';
 			}
 
-			 var params = {
-			  InstanceIds: [
-			    instanceId
-			  ]
-			 }
+			var params = {
+				InstanceIds: [
+					instanceId
+				]
+			}
 
 			return this._ec2.terminateInstances(params).promise();
 

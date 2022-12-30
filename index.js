@@ -5,9 +5,19 @@ import { EC2Manager}  from './src/EC2Manager.js';
 const manager=new EC2Manager();
 
 
-manager.listInstances().then((instances)=>{
+manager.setInstanceParams({
 
-	
+	ImageId: 'ami-014b71fc78f51dec0', //my custom image
+	InstanceType: 't2.micro',
+	KeyName: 'ec2_rsa',
+
+}).setValidInstanceOptions({
+
+	ImageId:['ami-014b71fc78f51dec0'], //todo create more images 
+	InstanceType: ['t2.micro'],
+
+}).listInstances().then((instances)=>{
+
 	return instances;
 
 }).then((instances)=>{
@@ -28,20 +38,28 @@ manager.listInstances().then((instances)=>{
 			console.log('Stopping instance: '+args.instance);
 			return manager.stopInstance(args.instance);
 
-			return;
+			//return;
 		}
 
 		if(args.method==='terminateInstance'&&typeof args.instance =='string'){
 			console.log('Terminating instance: '+args.instance);
 			return manager.terminateInstance(args.instance);
 
-			return;
+			//return;
 		}
 
 
 		if(args.method==='listInstances'){
 			console.log(JSON.stringify(instances));
 			return;
+		}
+
+
+		if(args.method==='createInstance'){
+			var options=args.options||{}
+			return manager.createInstance(options.title||"Untitled instance", args.options);
+
+			//return;
 		}
 
 		console.log('Nothing to do :'+JSON.stringify(args));
