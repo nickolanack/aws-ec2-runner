@@ -26,6 +26,10 @@ export class EC2Manager extends EventEmitter {
 		})).catch(()=>{
 
 			AWS.config.loadFromPath('./.credentials.json');
+
+			console.log('loaded from json file');
+
+			return true;
 		
 		}).then(()=>{
 
