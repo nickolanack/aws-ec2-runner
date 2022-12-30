@@ -131,7 +131,6 @@ export class EC2Manager extends EventEmitter {
 						let out = {};
 
 						([
-
 							"ImageId",
 							"InstanceId",
 							"InstanceType",
@@ -223,6 +222,62 @@ export class EC2Manager extends EventEmitter {
 		});
 
 
+
+	}
+
+	hasInstance(instanceId){
+		return this.listInstances().then((instances)=>{
+
+			if(instances.filter((instance)=>{
+				return instance.InstanceId===instanceId
+			}).length===0){
+				return false;
+			}
+			return true;
+
+		});
+	}
+
+
+	stopInstance(instanceId){
+
+		return this.hasInstance(instanceId).then((exists)=>{
+
+			if(!exists){
+				throw 'instance: '+instanceId+', not found';
+			}
+
+			 var params = {
+			  InstanceIds: [
+			    instanceId
+			  ]
+			 }
+
+			return this._ec2.stopInstances(params).promise();
+
+
+		});
+
+	}
+
+	terminateInstance(instanceId){
+
+		return this.hasInstance(instanceId).then((exists)=>{
+
+			if(!exists){
+				throw 'instance: '+instanceId+', not found';
+			}
+
+			 var params = {
+			  InstanceIds: [
+			    instanceId
+			  ]
+			 }
+
+			return this._ec2.terminateInstances(params).promise();
+
+
+		});
 
 	}
 
