@@ -106,7 +106,7 @@ manager.setInstanceParams({
 
 		if (args.method === 'connectSSH') {
 
-			(new SSHConsole(manager)).connect(args).then((conn) => {
+			(new SSHConsole(manager)).connect(args.instance).then((conn) => {
 
 
 				console.log('[');

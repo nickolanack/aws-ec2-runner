@@ -129,6 +129,16 @@ export class EC2Manager extends EventEmitter {
 
 	}
 
+	listInstancesCached() {
+
+		if(this._instances){
+			return Promise.resolve(this._instances);
+		}
+
+		return this.listInstances();
+
+	}
+
 	listInstances() {
 
 
@@ -206,7 +216,7 @@ export class EC2Manager extends EventEmitter {
 
 					});
 
-
+					this._instances=instances;
 					resolve(instances);
 
 
@@ -300,7 +310,7 @@ export class EC2Manager extends EventEmitter {
 	}
 
 	hasInstance(instanceId) {
-		return this.listInstances().then((instances) => {
+		return this.listInstancesCached().then((instances) => {
 
 			if (instances.filter((instance) => {
 					return instance.InstanceId === instanceId
@@ -316,7 +326,7 @@ export class EC2Manager extends EventEmitter {
 	getInstance(instanceId) {
 		return this.hasInstance().then(()=>{
 
-			return this.listInstances();
+			return this.listInstancesCached();
 
 		}).then((instances) => {
 

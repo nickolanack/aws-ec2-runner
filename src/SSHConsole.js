@@ -8,11 +8,15 @@ import {
 } from './EC2Manager.js';
 
 
-import {generateKeyPair} from 'node:crypto';
+import {
+	generateKeyPair
+} from 'node:crypto';
 
 import sshpk from 'sshpk';
 
-import { Client }  from 'ssh2';
+import {
+	Client
+} from 'ssh2';
 
 
 export class SSHConsole extends EventEmitter {
@@ -23,31 +27,24 @@ export class SSHConsole extends EventEmitter {
 
 		super();
 
-		this._manager=manager;
+		this._manager = manager;
 
 	}
 
-	connect(args){
+
+	generateKeys(){
 
 
-			return new Promise((resolve)=>{
+		return new Promise((resolve, reject) => {
 
-
-
-				var ec2instanceconnect = new AWS.EC2InstanceConnect({
-					apiVersion: '2018-04-02',
-					region: "ca-central-1"
-				});
-
-
-				generateKeyPair('rsa', {
+			generateKeyPair('rsa', {
 					modulusLength: 4096,
 					publicKeyEncoding: {
-						type: 'spki',
+						type: 'pkcs1',
 						format: 'pem'
 					},
 					privateKeyEncoding: {
-						type: 'pkcs8',
+						type: 'pkcs1',
 						format: 'pem',
 						// cipher: 'aes-256-cbc',
 						// passphrase: 'top secret'
@@ -55,137 +52,190 @@ export class SSHConsole extends EventEmitter {
 				}, (err, publicKey, privateKey) => {
 					// Handle errors and use the generated key pair.
 
-					if(err){
-						throw err;
+					if (err) {
+						reject(err);
+						return;
 					}
 
 					const pemKey = sshpk.parseKey(publicKey, 'pem');
-	        		const sshRsa = pemKey.toString('ssh');
+					const sshRsa = pemKey.toString('ssh');
 
 
-	        		const pemPrivKey = sshpk.parsePrivateKey(privateKey, 'pem', {
-	        			//passphrase:'top secret'
-	        		});
-	        		const sshRsaPriv = pemPrivKey.toString('pkcs1');
+					const pemPrivKey = sshpk.parsePrivateKey(privateKey, 'pem', {
+						//passphrase:'top secret'
+					});
+					const sshRsaPriv = pemPrivKey.toString('pkcs1');
 
-					//console.log(sshRsa);
-					//console.log(sshRsaPriv);
+					resolve({
+						publicKey:sshRsa,
+						privateKey:sshRsaPriv
+					});
+			});
 
-					var params = {
-						InstanceId: args.instance,
-						AvailabilityZone: "ca-central-1a",
-						/* required */
-						SSHPublicKey: sshRsa,
-						InstanceOSUser:'ec2-user'
-					};
-					ec2instanceconnect.sendSSHPublicKey(params, (err, data) => {
+		});
 
 
-						console.log(data);
+	}
 
 
-						this._manager.getInstance(args.instance).then((instanceData)=>{
-				
+	sendPublicKey(instance, publicKey){
+
+
+		return new Promise((resolve, reject)=>{
+
+			var params = {
+				InstanceId: instance,
+				AvailabilityZone: "ca-central-1a",
+				/* required */
+				SSHPublicKey: publicKey,
+				InstanceOSUser: 'ec2-user'
+			};
+
+			var ec2instanceconnect = new AWS.EC2InstanceConnect({
+				apiVersion: '2018-04-02',
+				region: "ca-central-1"
+			});
+
+			ec2instanceconnect.sendSSHPublicKey(params, (err, data) => {
+
+				if(err){
+					reject(err);
+					return;
+				}
+
+				resolve(data);
+
+			});
+
+
+
+		});
+
+		
+
+
+
+	}
+
+	connect(instance) {
+
+		return this.generateKeys().then(({privateKey, publicKey})=>{
+
+
+			return this.sendPublicKey(instance, publicKey).then((data)=>{
+
+				console.log(data);
+
+				return new Promise((resolve) => {
+
+
+						this._manager.getInstance(instance).then((instanceData) => {
+
 							console.log(instanceData);
 
 							const conn = new Client();
-							
-							conn.on('banner', (data)=>{
+
+							conn.on('banner', (data) => {
 								console.log(data);
 							})
-							
-							conn.on('ready', () => {
-							  
-							  console.log('Client :: ready');
 
-							  this._conn=conn;
-							  resolve(this);
+							conn.on('ready', () => {
+
+								console.log('Client :: ready');
+
+								this._conn = conn;
+								resolve(this);
 
 
 
 							}).connect({
-							  host: instanceData.PublicDnsName,
-							  port: 22,
-							  username: 'ec2-user',
-							  privateKey: sshRsaPriv,
-							  authHandler:['publickey','hostbased']
+								host: instanceData.PublicDnsName,
+								port: 22,
+								username: 'ec2-user',
+								privateKey: privateKey,
+								authHandler: ['publickey', 'hostbased']
 							});
 
 						})
 
-						
-					});
 
-				});
+					
 
-			})
+				})
+
+
+			});
+
+			
+
+
+		})
 
 	}
 
-	close(){
-		if(this._conn){
+	close() {
+		if (this._conn) {
 			this._conn.end();
-			this._conn=null;
+			this._conn = null;
 		}
 
 	}
 
-	exec(cmd, stdout, stderr, input){
+	exec(cmd, stdout, stderr, input) {
 
-		if(!this._conn){
+		if (!this._conn) {
 			return Promise.reject('connection closed');
 		}
 
 
-		if(typeof cmd !='string'&&cmd.length>0){
+		if (typeof cmd != 'string' && cmd.length > 0) {
 
 
-			return this.exec(cmd.shift(), stdout, stderr, input).then((code)=>{
+			return this.exec(cmd.shift(), stdout, stderr, input).then((code) => {
 
-				if(code!=0||cmd.length==0){
+				if (code != 0 || cmd.length == 0) {
 					console.log(code);
 					return code;
 				}
 
 				return this.exec(cmd, stdout, stderr, input);
 
-			}).catch((e)=>{
+			}).catch((e) => {
 				console.log('error');
 				console.error('error');
 			})
 		}
 
 
-		if(typeof cmd =='string'){
+		if (typeof cmd == 'string') {
 
-			return new Promise((resolve, reject)=>{
+			return new Promise((resolve, reject) => {
 
-				if(input){
+				if (input) {
 					input(cmd);
-				}else{
+				} else {
 					stdout(cmd);
 				}
-				
-				this._conn.exec(cmd, { pty: true }, (err, stream) => {
-						
-						if (err) throw err;
-						
-						stream.on('close', (code, signal) => {
-							
-							console.log('Stream :: close :: code: ' + code + ', signal: ' + signal);
-							resolve(code);
 
-						}).on('data', (data) => {
-							stdout(data.toString());
-						}).stderr.on('data', (data) => {
-							stderr(data.toString());
-						});
+				this._conn.exec(cmd, {
+					pty: true
+				}, (err, stream) => {
+
+					if (err) throw err;
+
+					stream.on('close', (code, signal) => {
+
+						resolve(code);
+
+					}).on('data', (data) => {
+						stdout(data.toString());
+					}).stderr.on('data', (data) => {
+						stderr(data.toString());
 					});
+				});
 			});
 
 		}
-
-		
 
 
 
