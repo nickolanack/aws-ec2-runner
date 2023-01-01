@@ -80,34 +80,37 @@ export class SSHConsole extends EventEmitter {
 
 	sendPublicKey(instance, publicKey){
 
+		return this._manager.getInstance(instance).then((instanceData) => {
 
-		return new Promise((resolve, reject)=>{
+			return new Promise((resolve, reject)=>{
 
-			var params = {
-				InstanceId: instance,
-				AvailabilityZone: "ca-central-1a",
-				/* required */
-				SSHPublicKey: publicKey,
-				InstanceOSUser: 'ec2-user'
-			};
+				var params = {
+					InstanceId: instance,
+					AvailabilityZone: instanceData.Placement.AvailabilityZone,
+					/* required */
+					SSHPublicKey: publicKey,
+					InstanceOSUser: 'ec2-user'
+				};
 
-			var ec2instanceconnect = new AWS.EC2InstanceConnect({
-				apiVersion: '2018-04-02',
-				region: "ca-central-1"
+				var ec2instanceconnect = new AWS.EC2InstanceConnect({
+					apiVersion: '2018-04-02',
+					region: "ca-central-1"
+				});
+
+				ec2instanceconnect.sendSSHPublicKey(params, (err, data) => {
+
+					if(err){
+						reject(err);
+						return;
+					}
+
+					resolve(data);
+
+				});
+
+
+
 			});
-
-			ec2instanceconnect.sendSSHPublicKey(params, (err, data) => {
-
-				if(err){
-					reject(err);
-					return;
-				}
-
-				resolve(data);
-
-			});
-
-
 
 		});
 
