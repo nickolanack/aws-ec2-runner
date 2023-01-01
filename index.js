@@ -1,96 +1,143 @@
-import { EC2Manager}  from './src/EC2Manager.js';
+import {
+	EC2Manager
+} from './src/EC2Manager.js';
+
+import {
+	SSHConsole
+} from './src/SSHConsole.js';
 
 
+import AWS from 'aws-sdk';
 
-const manager=new EC2Manager();
+
+const manager = new EC2Manager();
 
 
 manager.setInstanceParams({
 
-	ImageId: 'ami-014b71fc78f51dec0', //my custom image
+	ImageId: 'ami-06c3426233c180fef',
 	InstanceType: 't2.micro',
 	KeyName: 'ec2_rsa',
 
 }).setValidInstanceOptions({
 
-	ImageId:['ami-014b71fc78f51dec0'], //todo create more images 
+	ImageId: ['ami-014b71fc78f51dec0', 'ami-06c3426233c180fef'], //todo create more images 
 	InstanceType: ['t2.nano', 't2.micro', 't2.small', 't2.medium', 't2.large'],
 
-}).listInstances().then((instances)=>{
+}).listInstances().then((instances) => {
 
 	return instances;
 
-}).then((instances)=>{
+}).then((instances) => {
 
 
-	if(typeof process.argv[2]=='string'&&process.argv[2][0]=='{'){
+	if (typeof process.argv[2] == 'string' && process.argv[2][0] == '{') {
 
 
-		var arg=process.argv[2];
-	
-		if(arg.indexOf('{\\"')===0){
-			arg=arg.replaceAll('\\"', '"');
-		}		
+		var arg = process.argv[2];
 
-		var args=JSON.parse(arg);
+		if (arg.indexOf('{\\"') === 0) {
+			arg = arg.replaceAll('\\"', '"');
+		}
 
-		if(args.method==='stopInstance'&&typeof args.instance =='string'){
-			console.log('Stopping instance: '+args.instance);
+		var args = JSON.parse(arg);
+
+
+		if (args.method === 'listInstances') {
+			console.log(JSON.stringify(instances));
+			return;
+		}
+
+
+		if (args.method === 'createInstance') {
+			var options = args.options || {}
+
+
+			if (options.mem && options.cpu) {
+
+				options.InstanceType = 't2.nano'; //1,0.5
+
+				var mem = parseFloat(options.mem);
+				var cpu = parseFloat(options.cpu);
+
+				if (mem >= 1) { //1, 1
+					options.InstanceType = 't2.micro';
+				}
+
+				if (mem >= 2) { //1, 2
+					options.InstanceType = 't2.small';
+				}
+
+				if (cpu >= 2 || mem >= 2) { //2, 4
+					options.InstanceType = 't2.medium';
+				}
+
+				if (mem > 2) { //2, 8
+					options.InstanceType = 't2.large';
+				}
+
+			}
+
+
+			return manager.createInstance(options.title || "Untitled instance", args.options);
+
+			//return;
+		}
+
+
+
+		if (args.method === 'stopInstance' && typeof args.instance == 'string') {
+			console.log('Stopping instance: ' + args.instance);
 			return manager.stopInstance(args.instance);
 
 			//return;
 		}
 
-		if(args.method==='terminateInstance'&&typeof args.instance =='string'){
-			console.log('Terminating instance: '+args.instance);
+		if (args.method === 'terminateInstance' && typeof args.instance == 'string') {
+			console.log('Terminating instance: ' + args.instance);
 			return manager.terminateInstance(args.instance);
 
 			//return;
 		}
 
 
-		if(args.method==='listInstances'){
-			console.log(JSON.stringify(instances));
-			return;
+		
+
+
+		if (args.method === 'connectSSH') {
+
+			(new SSHConsole(manager)).connect(args).then((conn) => {
+
+
+				console.log('[');
+
+
+				return conn.exec(args.command, (out)=>{
+				
+					console.log(JSON.stringify({out:out})+',');
+				
+				}, (err)=>{
+				
+					console.log(JSON.stringify({err:err})+',');
+				
+				}, (mirror)=>{
+				
+					console.log(JSON.stringify({in:mirror})+',');
+				
+				}).then((code)=>{
+					
+					console.log({code:code});
+
+					console.log(']')
+					conn.close();
+
+				});		
+
+			})
+
 		}
 
-
-		if(args.method==='createInstance'){
-			var options=args.options||{}
-
-
-			if(options.mem&&options.cpu){
-
-				options.InstanceType='t2.nano'; //1,0.5
-
-				var mem=parseFloat(options.mem);
-				var cpu=parseFloat(options.cpu);
-
-				if(mem>=1){ //1, 1
-					options.InstanceType='t2.micro';
-				}
-
-				if(mem>=2){ //1, 2
-					options.InstanceType='t2.small';
-				}
-
-				if(cpu>=2||mem>=2){ //2, 4
-					options.InstanceType='t2.medium';
-				}
-
-				if(mem>2){ //2, 8
-					options.InstanceType='t2.large';
-				}
-
-			}
-
-
-			return manager.createInstance(options.title||"Untitled instance", args.options);
-
-			//return;
-		}
-
-		console.log('Nothing to do :'+JSON.stringify(args));
+		console.log('Nothing to do :' + JSON.stringify(args));
 
 		return;
 	}
@@ -99,7 +146,7 @@ manager.setInstanceParams({
 
 
 
-}).catch((e)=>{
+}).catch((e) => {
 	console.error(e);
 });
 

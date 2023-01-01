@@ -313,6 +313,21 @@ export class EC2Manager extends EventEmitter {
 	}
 
 
+	getInstance(instanceId) {
+		return this.hasInstance().then(()=>{
+
+			return this.listInstances();
+
+		}).then((instances) => {
+
+			return instances.filter((instance) => {
+					return instance.InstanceId === instanceId
+				}).shift();
+			
+		});
+	}
+
+
 	stopInstance(instanceId) {
 
 		return this.hasInstance(instanceId).then((exists) => {
