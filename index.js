@@ -80,6 +80,11 @@ manager.setInstanceParams({
 
 			}
 
+			if(options.ttl){
+				//add tag
+				options.tags={TTL:options.ttl};
+			}
+
 
 			return manager.createInstance(options.title || "Untitled instance", args.options).then((instance)=>{
 				console.log(JSON.stringify(instance));
