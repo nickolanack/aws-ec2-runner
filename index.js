@@ -24,7 +24,7 @@ manager.setInstanceParams({
 }).setValidInstanceOptions({
 
 	ImageId: ['ami-014b71fc78f51dec0', 'ami-06c3426233c180fef'], //todo create more images 
-	InstanceType: ['t2.nano', 't2.micro', 't2.small', 't2.medium', 't2.large'],
+	InstanceType: ['t2.nano', 't2.micro', 't2.small', 't2.medium', 't2.large', 't2.xlarge', 't2.2xlarge'],
 
 }).listInstances().then((instances) => {
 
