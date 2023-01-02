@@ -78,6 +78,15 @@ manager.setInstanceParams({
 					options.InstanceType = 't2.large';
 				}
 
+				if (cpu > 2 || mem > 8) { //4, 16
+					options.InstanceType = 't2.xlarge';
+				}
+
+				if (cpu > 4 || mem > 16) { //4, 16
+					options.InstanceType = 't2.2xlarge';
+				}
+
+
 			}
 
 			if(options.ttl){
