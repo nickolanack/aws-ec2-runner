@@ -81,7 +81,9 @@ manager.setInstanceParams({
 			}
 
 
-			return manager.createInstance(options.title || "Untitled instance", args.options);
+			return manager.createInstance(options.title || "Untitled instance", args.options).then((instance)=>{
+				console.log(JSON.stringify(instance));
+			});
 
 			//return;
 		}

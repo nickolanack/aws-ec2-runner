@@ -301,7 +301,12 @@ export class EC2Manager extends EventEmitter {
 				Tags: tags
 			};
 
-			return this._ec2.createTags(tagParams).promise();
+			return this._ec2.createTags(tagParams).promise().then(()=>{
+
+				
+				this._instances=null; //clear cache
+				return this.getInstance(data.Instances[0].InstanceId);
+			})
 
 		});
 
