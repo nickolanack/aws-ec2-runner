@@ -271,7 +271,7 @@ export class EC2Manager extends EventEmitter {
 			Object.keys(options.tags).forEach((n) => {
 
 				//blacklist 
-				if ((['Name', 'Owner', 'Label']).indexOf(k) >= 0) {
+				if ((['Name', 'Owner', 'Label']).indexOf(n) >= 0) {
 					return;
 				}
 
