@@ -24,7 +24,7 @@ manager.setInstanceParams({
 }).setValidInstanceOptions({
 
 	ImageId: ['ami-014b71fc78f51dec0', 'ami-06c3426233c180fef'], //todo create more images 
-	InstanceType: ['t2.nano', 't2.micro', 't2.small', 't2.medium', 't2.large', 't2.xlarge', 't2.2xlarge'],
+	InstanceType: ['t2.nano', 't2.micro', 't2.small', 't2.medium', 't2.large', 't2.xlarge', 't2.2xlarge', 'm5a.8xlarge'],
 
 }).listInstances().then((instances) => {
 
@@ -84,6 +84,11 @@ manager.setInstanceParams({
 
 				if (cpu > 4 || mem > 16) { //4, 16
 					options.InstanceType = 't2.2xlarge';
+				}
+
+
+				if(mem==128){
+					options.InstanceType = 'm5a.8xlarge';
 				}
 
 
