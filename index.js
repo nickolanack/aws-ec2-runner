@@ -9,6 +9,8 @@ import {
 
 import AWS from 'aws-sdk';
 
+import { SocketIOClient } from 'push-node-socket-io-client';
+import fs from 'fs';
 
 const manager = new EC2Manager();
 
@@ -106,34 +108,62 @@ manager.setInstanceParams({
 
 		if (args.method === 'connectSSH') {
 
-			(new SSHConsole(manager)).connect(args.instance).then((conn) => {
 
 
-				console.log('[');
+
+			const config= JSON.parse(fs.readFileSync('./.socket.json'));
+			console.log(config);
 
 
-				return conn.exec(args.command, (out)=>{
-				
-					console.log(JSON.stringify({out:out})+',');
-				
-				}, (err)=>{
-				
-					console.log(JSON.stringify({err:err})+',');
-				
-				}, (mirror)=>{
-				
-					console.log(JSON.stringify({in:mirror})+',');
-				
-				}).then((code)=>{
+			const client = new SocketIOClient(config.server);
+
+			console.log(Object.keys(client));
+
+			client.connect(config.auth, (success) => {
+
+				if(!success){
+					console.log("Failed to connect");
+					return;
+				}
+			
+
+
+
+				(new SSHConsole(manager)).connect(args.instance).then((conn) => {
+
+
+					console.log('[');
+
+
+					return conn.exec(args.command, (out)=>{
+
+						client.emit(args.instance, 'terminal', {out:out});
+						console.log(JSON.stringify({out:out})+',');
 					
-					console.log({code:code});
+					}, (err)=>{
+					
+						client.emit(args.instance, 'terminal', {err:err});
+						console.log(JSON.stringify({err:err})+',');
+					
+					}, (mirror)=>{
+					
+						client.emit(args.instance, 'terminal', {in:mirror});
+						console.log(JSON.stringify({in:mirror})+',');
+					
+					}).then((code)=>{
+						
+						client.emit(args.instance, 'terminal', {code:code});
+						console.log({code:code});
 
-					console.log(']')
-					conn.close();
+						console.log(']')
+						conn.close();
+						client.close();
 
-				});		
+					});		
 
-			})
+				})
+
+			});
 
 		}
 

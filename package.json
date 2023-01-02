@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.1284.0",
+    "push-node-socket-io-client": "github:nickolanack/push-node-socket-io-client",
     "ssh2": "^1.11.0",
     "sshpk": "^1.17.0",
     "uuid": "^9.0.0"
