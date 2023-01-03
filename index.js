@@ -138,9 +138,9 @@ manager.setInstanceParams({
 		
 			return (new SSHConsole(manager)).connect(args.instance).then((conn) => {
 				return conn.sendFile(options.data.original, '~/'+options.name);
-			}).then((conn){
+			}).then((conn)=>{
 				conn.close();
-			})
+			});
 
 
 		}
