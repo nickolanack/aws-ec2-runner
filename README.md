@@ -9,7 +9,7 @@ Provides ssh terminal-ish access to all instances
 Benifits of creating single use instances for running processes
  - Consistency. Install scripts work consistently accross all machines 
  - Scalable. Any number of instances can be created and run in parallel. Configurable cpus 
- - Start up speed. Can quickly create and run simulations on 
+ - Start up speed. Can quickly create and run simulations on multiple machines
  - Cost. No need to buy hardware
  
  
