@@ -136,6 +136,8 @@ export class SSHConsole extends EventEmitter {
 					return;
 				}
 
+				console.log('Upload: '+source);
+
 				sftp.fastPut(source, dest, (err)=>{
 
 					if(err){
