@@ -130,29 +130,27 @@ export class SSHConsole extends EventEmitter {
 
 		
 
-			this._conn.sftp(
-				function(err, sftp) {
-					if (err) {
-						reject(err);
-						return;
-					}
-
-					console.log("- SFTP started");
-
-					// upload file
-					var readStream = fs.createReadStream(source);
-					var writeStream = sftp.createWriteStream(dest);
-
-					// what to do when transfer finishes
-					writeStream.on('close', function() {
-						console.log("- file transferred");
-						sftp.end();
-						resolve(this)
-					});
-
-					// initiate transfer of file
-					readStream.pipe(writeStream);
+			this._conn.sftp(function(err, sftp) {
+				if (err) {
+					reject(err);
+					return;
 				}
+
+				console.log("- SFTP started");
+
+				// upload file
+				var readStream = fs.createReadStream(source);
+				var writeStream = sftp.createWriteStream(dest);
+
+				// what to do when transfer finishes
+				writeStream.on('close', function() {
+					console.log("- file transferred");
+					sftp.end();
+					resolve(this)
+				});
+
+				// initiate transfer of file
+				readStream.pipe(writeStream);
 			});
 
 		});
