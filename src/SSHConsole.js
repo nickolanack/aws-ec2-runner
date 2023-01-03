@@ -137,6 +137,7 @@ export class SSHConsole extends EventEmitter {
 				}
 
 				console.log('Upload: '+source);
+				console.log(fs.existsSync(source)?'exists':'does not exist');
 
 				sftp.fastPut(source, dest, (err)=>{
 
