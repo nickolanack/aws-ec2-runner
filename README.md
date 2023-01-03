@@ -4,6 +4,7 @@ Run large processing jobs by instantiating ec2 instances
 This application is a work in progress...
 
 Creates a simple user interface for creating ephemeral vms on aws for running jobs
+Provides ssh terminal-ish access to all instances 
 
 Benifits of creating single use instances for running processes
  - Consistency. Install scripts work consistently accross all machines 
