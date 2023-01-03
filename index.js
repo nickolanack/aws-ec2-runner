@@ -136,9 +136,18 @@ manager.setInstanceParams({
 
 			var options = args.options || {}
 		
+			var source=options.file.replaceAll("\\/",'/')
+			var dest= './'+options.name
+
 			return (new SSHConsole(manager)).connect(args.instance).then((conn) => {
-				return conn.sendFile(options.file.replaceAll("\\/",'/'), './'+options.name);
+				return conn.sendFile(source, dest);
 			}).then((conn)=>{
+
+				console.log(JSON.stringify({
+					source:source,
+					dest:dest
+				}));
+
 				conn.close();
 			});
 
