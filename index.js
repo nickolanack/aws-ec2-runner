@@ -24,7 +24,7 @@ manager.setInstanceParams({
 }).setValidInstanceOptions({
 
 	ImageId: ['ami-014b71fc78f51dec0', 'ami-06c3426233c180fef'], //todo create more images 
-	InstanceType: ['t2.nano', 't2.micro', 't2.small', 't2.medium', 't2.large', 't2.xlarge', 't2.2xlarge', 'm5a.8xlarge', 'm5a.12xlarge'],
+	InstanceType: ['t2.nano', 't2.micro', 't2.small', 't2.medium', 't2.large', 't2.xlarge', 't2.2xlarge', 'm5a.4xlarge', 'm5a.8xlarge', 'm5a.12xlarge'],
 
 }).listInstances().then((instances) => {
 
@@ -82,16 +82,22 @@ manager.setInstanceParams({
 					options.InstanceType = 't2.xlarge';
 				}
 
-				if (cpu > 4 || mem > 16) { //4, 16
+				if (cpu > 4 || mem > 16) { //8, 32
 					options.InstanceType = 't2.2xlarge';
 				}
 
 
-				if(mem==128){
+
+
+				if (cpu > 8 || mem > 32) { //16, 64
+					options.InstanceType = 'm5a.4xlarge';
+				}
+
+				if(cpu > 16 || mem > 64){
 					options.InstanceType = 'm5a.8xlarge';
 				}
 
-				if(mem==192){
+				if(cpu > 32 || mem > 128){
 					options.InstanceType = 'm5a.12xlarge';
 				}
 
