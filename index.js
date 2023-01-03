@@ -87,8 +87,6 @@ manager.setInstanceParams({
 				}
 
 
-
-
 				if (cpu > 8 || mem > 32) { //16, 64
 					options.InstanceType = 'm5a.4xlarge';
 				}
@@ -134,7 +132,18 @@ manager.setInstanceParams({
 		}
 
 
+		if (args.method === 'uploadFile') {
+
+			var options = args.options || {}
 		
+			return (new SSHConsole(manager)).connect(args.instance).then((conn) => {
+				return conn.sendFile(options.data.original, '~/'+options.name);
+			}).then((conn){
+				conn.close();
+			})
+
+
+		}
 
 
 		if (args.method === 'connectSSH') {

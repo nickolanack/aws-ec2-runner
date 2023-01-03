@@ -14,6 +14,8 @@ import {
 
 import sshpk from 'sshpk';
 
+import fs from 'fs';
+
 import {
 	Client
 } from 'ssh2';
@@ -32,44 +34,44 @@ export class SSHConsole extends EventEmitter {
 	}
 
 
-	generateKeys(){
+	generateKeys() {
 
 
 		return new Promise((resolve, reject) => {
 
 			generateKeyPair('rsa', {
-					modulusLength: 4096,
-					publicKeyEncoding: {
-						type: 'pkcs1',
-						format: 'pem'
-					},
-					privateKeyEncoding: {
-						type: 'pkcs1',
-						format: 'pem',
-						// cipher: 'aes-256-cbc',
-						// passphrase: 'top secret'
-					}
-				}, (err, publicKey, privateKey) => {
-					// Handle errors and use the generated key pair.
+				modulusLength: 4096,
+				publicKeyEncoding: {
+					type: 'pkcs1',
+					format: 'pem'
+				},
+				privateKeyEncoding: {
+					type: 'pkcs1',
+					format: 'pem',
+					// cipher: 'aes-256-cbc',
+					// passphrase: 'top secret'
+				}
+			}, (err, publicKey, privateKey) => {
+				// Handle errors and use the generated key pair.
 
-					if (err) {
-						reject(err);
-						return;
-					}
+				if (err) {
+					reject(err);
+					return;
+				}
 
-					const pemKey = sshpk.parseKey(publicKey, 'pem');
-					const sshRsa = pemKey.toString('ssh');
+				const pemKey = sshpk.parseKey(publicKey, 'pem');
+				const sshRsa = pemKey.toString('ssh');
 
 
-					const pemPrivKey = sshpk.parsePrivateKey(privateKey, 'pem', {
-						//passphrase:'top secret'
-					});
-					const sshRsaPriv = pemPrivKey.toString('pkcs1');
+				const pemPrivKey = sshpk.parsePrivateKey(privateKey, 'pem', {
+					//passphrase:'top secret'
+				});
+				const sshRsaPriv = pemPrivKey.toString('pkcs1');
 
-					resolve({
-						publicKey:sshRsa,
-						privateKey:sshRsaPriv
-					});
+				resolve({
+					publicKey: sshRsa,
+					privateKey: sshRsaPriv
+				});
 			});
 
 		});
@@ -78,11 +80,11 @@ export class SSHConsole extends EventEmitter {
 	}
 
 
-	sendPublicKey(instance, publicKey){
+	sendPublicKey(instance, publicKey) {
 
 		return this._manager.getInstance(instance).then((instanceData) => {
 
-			return new Promise((resolve, reject)=>{
+			return new Promise((resolve, reject) => {
 
 				var params = {
 					InstanceId: instance,
@@ -99,7 +101,7 @@ export class SSHConsole extends EventEmitter {
 
 				ec2instanceconnect.sendSSHPublicKey(params, (err, data) => {
 
-					if(err){
+					if (err) {
 						reject(err);
 						return;
 					}
@@ -114,62 +116,102 @@ export class SSHConsole extends EventEmitter {
 
 		});
 
-		
-
 
 
 	}
 
+
+
+	sendFile(source, dest) {
+
+
+		return new Promise((resolve, reject)=>{
+
+
+		
+
+			this._conn.sftp(
+				function(err, sftp) {
+					if (err) {
+						reject(err);
+						return;
+					}
+
+					console.log("- SFTP started");
+
+					// upload file
+					var readStream = fs.createReadStream(source);
+					var writeStream = sftp.createWriteStream(dest);
+
+					// what to do when transfer finishes
+					writeStream.on('close', function() {
+						console.log("- file transferred");
+						sftp.end();
+						resolve(this)
+					});
+
+					// initiate transfer of file
+					readStream.pipe(writeStream);
+				}
+			});
+
+		});
+
+
+	}
+
+
 	connect(instance) {
 
-		return this.generateKeys().then(({privateKey, publicKey})=>{
+		return this.generateKeys().then(({
+			privateKey,
+			publicKey
+		}) => {
 
 
-			return this.sendPublicKey(instance, publicKey).then((data)=>{
+			return this.sendPublicKey(instance, publicKey).then((data) => {
 
 				console.log(data);
 
 				return new Promise((resolve) => {
 
 
-						this._manager.getInstance(instance).then((instanceData) => {
+					this._manager.getInstance(instance).then((instanceData) => {
 
-							console.log(instanceData);
+						console.log(instanceData);
 
-							const conn = new Client();
+						const conn = new Client();
 
-							conn.on('banner', (data) => {
-								console.log(data);
-							})
-
-							conn.on('ready', () => {
-
-								console.log('Client :: ready');
-
-								this._conn = conn;
-								resolve(this);
-
-
-
-							}).connect({
-								host: instanceData.PublicDnsName,
-								port: 22,
-								username: 'ec2-user',
-								privateKey: privateKey,
-								authHandler: ['publickey', 'hostbased']
-							});
-
+						conn.on('banner', (data) => {
+							console.log(data);
 						})
 
+						conn.on('ready', () => {
 
-					
+							console.log('Client :: ready');
+
+							this._conn = conn;
+							resolve(this);
+
+
+
+						}).connect({
+							host: instanceData.PublicDnsName,
+							port: 22,
+							username: 'ec2-user',
+							privateKey: privateKey,
+							authHandler: ['publickey', 'hostbased']
+						});
+
+					})
+
+
 
 				})
 
 
 			});
 
-			
 
 
 		})
