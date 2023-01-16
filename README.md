@@ -1,4 +1,7 @@
 # aws-ec2-runner
+
+Building my own colab...
+
 Run large processing jobs by instantiating ec2 instances
 
 This application is a work in progress...
